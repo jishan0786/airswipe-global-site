@@ -357,6 +357,30 @@ button{font-family:inherit;cursor:pointer}
 /* home hero single column */
 #page-home .hero-inner{grid-template-columns:1fr;max-width:860px}
 
+/* ===== floating action stack (callback + back to top) ===== */
+.fabstack{position:fixed;right:clamp(16px,4vw,26px);bottom:calc(clamp(16px,4vw,26px) + env(safe-area-inset-bottom,0px));z-index:150;display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.fab-cb{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:999px;border:none;background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff;font-family:Inter;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 14px 34px -10px rgba(0,179,164,.6);opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .3s var(--ease),transform .3s var(--ease),visibility .3s,box-shadow .25s}
+.fab-cb.show{opacity:1;visibility:visible;transform:none}
+.fab-cb:hover{transform:translateY(-2px);box-shadow:0 18px 40px -10px rgba(0,179,164,.7)}
+.fab-cb svg{flex:none}
+/* back to top sits in the stack now */
+.fabstack .totop{position:static;right:auto;bottom:auto;align-self:flex-end}
+@media(max-width:520px){
+  .fab-cb .lbl{display:none}
+  .fab-cb{padding:13px}
+}
+
+/* ok badge */
+.ok-badge{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--teal),var(--blue));color:#fff}
+.ok-badge.big{width:88px;height:88px;margin-bottom:22px}
+
+/* thank you full screen */
+.thanks{position:fixed;inset:0;z-index:300;background:linear-gradient(150deg,#061827,#0b2842 62%,#0a2035);color:#fff;display:none;align-items:center;justify-content:center;text-align:center;padding:30px}
+.thanks.open{display:flex}
+.thanks h2{font-size:clamp(30px,5vw,46px);margin:0 0 14px}
+.thanks p{color:#cad7e5;max-width:52ch;margin:0 auto 26px;font-size:17px}
+.thanks .eyebrow{justify-content:center;color:#66e6d9;margin-bottom:8px}
+
 </style>
 </head>
 <body>
@@ -855,9 +879,9 @@ button{font-family:inherit;cursor:pointer}
         <p>The Dubai forum brings together professionals across private AI, sovereign AI, Zero Trust, hybrid cloud, data residency, confidential computing, edge inference and AI infrastructure.</p>
       </div>
       <div class="grid-3">
-        <div class="tier reveal"><span class="tag">Technical Showcase</span><div class="price-tag">AED 18K</div><p>20-minute clearly labelled partner session, 2 event passes, partner profile, event branding and relevant session leads.</p></div>
-        <div class="tier hot reveal"><span class="tag teal">Engineering Partner</span><div class="price-tag">AED 28K</div><p>30-minute partner session, tabletop presence, 4 passes, brand visibility and lead capture.</p></div>
-        <div class="tier reveal"><span class="tag gold">Deep-Dive Lab</span><div class="price-tag">AED 40K+</div><p>45-minute technical workshop or lab, dedicated branding, deeper attendee engagement and lead generation.</p></div>
+        <div class="tier reveal"><span class="tag">Technical Showcase</span><div class="price-tag">USD 4,999</div><p>20-minute clearly labelled partner session, 2 event passes, partner profile, event branding and relevant session leads.</p></div>
+        <div class="tier hot reveal"><span class="tag teal">Engineering Partner</span><div class="price-tag">USD 7,999</div><p>30-minute partner session, tabletop presence, 4 passes, brand visibility and lead capture.</p></div>
+        <div class="tier reveal"><span class="tag gold">Deep-Dive Lab</span><div class="price-tag">USD 11,999+</div><p>45-minute technical workshop or lab, dedicated branding, deeper attendee engagement and lead generation.</p></div>
       </div>
     </div>
   </section>
@@ -1020,7 +1044,64 @@ button{font-family:inherit;cursor:pointer}
   </div>
 </footer>
 
-<button class="totop" id="toTop" aria-label="Back to top" title="Back to top"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 16V5M5 10l5-5 5 5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<!-- floating actions: request callback + back to top -->
+<div class="fabstack">
+  <button class="fab-cb" id="fabCb" aria-label="Request a callback">
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M4 3h3l1.4 3.5-2 1.2a10 10 0 004.9 4.9l1.2-2L16 15v3a1 1 0 01-1 1A13 13 0 013 6a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    <span class="lbl">Request a callback</span>
+  </button>
+  <button class="totop" id="toTop" aria-label="Back to top" title="Back to top"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 16V5M5 10l5-5 5 5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+
+<!-- callback overlay -->
+<div class="overlay" id="cbOverlay">
+  <div class="modal-wrap">
+    <button class="close" id="cbClose" aria-label="Close">&times;</button>
+    <div class="modal">
+      <div id="cbFormView">
+        <h3>Request a callback</h3>
+        <p>Leave your details, the team will call you back, and you can download the brochure right away.</p>
+        <form id="cbForm">
+          <div class="fgrid">
+            <div class="field"><label>Full name</label><input required></div>
+            <div class="field"><label>Phone number</label><input type="tel" placeholder="+971 ..." required></div>
+          </div>
+          <div class="field"><label>Work email</label><input type="email" required></div>
+          <div class="field"><label>Company / Organisation</label><input></div>
+          <div class="fgrid">
+            <div class="field"><label>Best time to call</label><select><option>Morning</option><option>Afternoon</option><option>Evening</option></select></div>
+            <div class="field"><label>I am interested in</label><select><option>Attending an event</option><option>Speaking</option><option>Partnership</option><option>General enquiry</option></select></div>
+          </div>
+          <label class="consent"><input type="checkbox" required><span>I agree to be contacted by AirSwipe Global about my enquiry.</span></label>
+          <button class="btn btn-primary" type="submit" style="width:100%">Request callback and get brochure
+            <svg class="arw" width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M1 6h13M9 1l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </form>
+      </div>
+      <div id="cbSuccessView" style="display:none;text-align:center">
+        <div class="ok-badge"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>You are all set</h3>
+        <p style="color:var(--muted)">We will call you back shortly. Your brochure is ready to download.</p>
+        <a class="btn btn-primary" id="brochureBtn" href="data:application/pdf;base64,JVBERi0xLjQKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUgo+PgplbmRvYmoKMiAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjEgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iagozIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhLUJvbGQgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YyIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKNCAwIG9iago8PAovQ29udGVudHMgOCAwIFIgL01lZGlhQm94IFsgMCAwIDU5NS4yNzU2IDg0MS44ODk4IF0gL1BhcmVudCA3IDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago1IDAgb2JqCjw8Ci9QYWdlTW9kZSAvVXNlTm9uZSAvUGFnZXMgNyAwIFIgL1R5cGUgL0NhdGFsb2cKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0F1dGhvciAoYW5vbnltb3VzKSAvQ3JlYXRpb25EYXRlIChEOjIwMjYwOTI5MTAxOTM3KzAwJzAwJykgL0NyZWF0b3IgKGFub255bW91cykgL0tleXdvcmRzICgpIC9Nb2REYXRlIChEOjIwMjYwOTI5MTAxOTM3KzAwJzAwJykgL1Byb2R1Y2VyIChSZXBvcnRMYWIgUERGIExpYnJhcnkgLSBcKG9wZW5zb3VyY2VcKSkgCiAgL1N1YmplY3QgKHVuc3BlY2lmaWVkKSAvVGl0bGUgKHVudGl0bGVkKSAvVHJhcHBlZCAvRmFsc2UKPj4KZW5kb2JqCjcgMCBvYmoKPDwKL0NvdW50IDEgL0tpZHMgWyA0IDAgUiBdIC9UeXBlIC9QYWdlcwo+PgplbmRvYmoKOCAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCAyMzk1Cj4+CnN0cmVhbQpHYXRtPD5CQTdfJ1JvZVtmWjA7cEc0MWQsInUpLGYvSVk0K0MjPVRWTSxlQjYsS1piR29aLV5tOHBgOSYrZjlzXSxsVD9jYkJMXFY0X0gyZm49UEgtb2JPNyFRZnVJKydOJ1Q7WTdNRk5UWmJyI0grQ19EQmQicUJQWG86JHI3NEpSTVljWC0kYTIlcll1IWIxQmRJQHAuUl5EVEprOl1DTFRWW00jZjwkLFgyImQhOT1gPmQnIS5KLnErWkRkUVwraSk5YUNxLDU5Vms8Ui4/cWpNVi9zZmksbTcyMSFDQUIjZz9bJCNtQSIzaGpwPVFdNkppKUcpOVA+SWUzM3VwJVJcQDpOWkNcLFVGIzFGJl9ZPTIyKXVBIXNBSS0yZD89blMtOms/P1MxLmVkSjxDcWZgZGlCU2M9JDNBcDAnZy9eTCQlLlU/aTVXNzlhTEBLUlFiI2UpNV9xUUtyKl8tZl1kITcnP0hva2NRRT8hRC9CaDZnPWVHQVpgJWEybjRlRjhibEVqJllCRGxoQi03PFVDLlxxWDJLODZbWD9waDcoWV1cPWozIiVcTG1fOVNIS18tWzk/MjRaO1ticVVmc01pOEU8UDdRXTVoMkQ0ZGdHLlhuIV4jPDEjVloxM2Y3SzBcalQ5NXFiNCRvJ3FAM0xGOVR0Rz9wXEYxVFlqWDhaPyNsVEQmb0RPSEVIJlIyNj5GKUcuUmxGQF0kKk5dO1ViKClTUylAdUVIL0E1PWk2Xi47SEtzJmpqPmpAYEhJO0JRVlY1aU07amQlbF9KXmtPQTloWDxWOWtTSDI2bStnRGElL0cmM1AnLFRYTipmKWBWMF1JZCE4ZCYjUUIoREFaM2BsMVYwdVcsJiRsSEZGQDBwcWt0ZCRTKzZSNmxTOUApQSNOUysrVlglK3JYYiNET1ZQdCZkNzlGIWBqbDhEVW9BVlFlVS86Um42XGFMVGUwJUJGZXNcJl9LLG1daUYiMFk8OigqWWpgVXFpQTBhKSRWYDwjOSpHc1BAKUFtMmdCRTkyL1piN3NEI2kkZT1eR0s4O183aT1MQHAzLyhDLGEnPjcuQUgpOkpwSzdZN2FxKTFvWzhMYS0lXSFjJyxGJm4/X2c/LFJZZGJzRWpRUG0kSiQvQChiKC1Ra2xUMCtucyRoJVw1KzlzdSN0NTNBa09YO0EqTipcNy8lNCJuYVszVUZzWD45cCNgTjNaI2lUPDRPWUE/PCcuZidSbV8iaUg6VDhRdFQ8RmtXUkVaKjBVPiokMipqQys4PCNXKT1fXWJcJ19GJXFeY3U5NGouIVJvVURwKShnckdPLFJYdUExWCQjPkU7ZTAwaz5ebj1MMTJpOy03Z0RAKzZrUE5baVBGT0s9UCZBVmgrJzwuKSFDPGxHWVhoa1VqIWtDYDFmLEVlXyk2XiFRMlkqQTpHPDZET2JdO3NaPy1VW0phWmlcTUk6bUd1LEtNWWowNmtHQTFmOzFxPjEiYnNaI25oPkQ6KGo2KE9zSDNxLzxQbjErc3U/VGM3KzhwTzspPFgjOkNGViNgI2toLywjaiFBOURFNlgvIUptQT44SVltTGArTCxSazZmJyUiYD84RTFTMDUhUF1RazgvKDldL0hzTTtCKnFmaD4jUl9hZ1YnMHE/THBdSnFGTk1BWjYtXCs+W0lxLjFYSE5PQDlMTV9PSGozT1UzViRVbExDRkZfISQ9MGpCXW1jN3JqWGpCL2BSIjlZQSwua25lSVFkck9zU2hjSFRQLUhSIyFmTUEjZiRnJ0lpcDMoNSwuTjtaJTZbWXNTVFlTPEoqXDwyX25jaGduIkYvblRwPUJCQ1xWWylYVG88XFc7MUlcYGFSYUteNXIkNklXaTM3Jik7V2o2L1VBXWgpdTwkVEdRIXBbKG5gUzpnWkwqa2QvJj0nTU5Pc29GbidjIl89NDE8KltvYko/RDQqYkcoWWZhVVxeJV9eVWlaKCEsX09oVEhhZyhucFdETCsiQV0uKkxJWitFVHQqVV90XSJUJ1JIWzxYMG9fbTBgcGw6V28kSidoRFZgYD5tUzsnLmVwVlhRWUAqX2pUOTxaaCZlRlk+UXExZCJcT2NKNzl0NFVmJXNCOTkkaGouSHEsJidXNl4hSC1vSD5iakopXC0xbWQ4S1w7Tj07OGA3WTchQjRrM0tAMlJwTUIlUV0rW2MlYD4lZlZST2w8PDBvXjZvViEuLGUiI0dNI1w1JEpmbWo8S04uTishYlJScFVKM0JMP2NRP19bPSJWRS4jOkNlYShVUy5gdFdRIS4iTjZLPDVSazJEJCgzW1hXL2NtP1omTSlrNCUzOSkqLDMqKGI6YnRoTkolMzNbUWkyQE1faFxJUGgrY0xOZ2lWKF0zLykhO3IkZVFTR2MjcUNPZiUlcyppcGdcI2FASExMRCM2ZTprP2pZOHRNXldaSFRZRC80JzpKL3BOUGsjYUBHQS9COGI/Kkc5Uj9jWDlwSzk7aEtXKUNzPUxUaW5xN143RTotQWQnOidiKCJLP2wjJzY+Uy9JNjtQQ2RhPDJlXT9MaG9uRFtBaXQnSS1DS0Y6biwtIW0xPjlpOEZCNmM1JSNoOjFQRkR1czBHJzhBaj1MRTpoJEdTZVIxMTIiRnJLMm4xa1YzQW1jPCtROlxFQDY9JiQ8P15HQHApQClzTzZmSG5AcSMuLUBzP2wyV1doY3V0QWtLYkhobldDYXBbJCRSOFg1aylaRGFBYlJPczBUcUs6XUJUI2FHNlZYQFFrW0ZJXydBcidEWTNxTidsOUMzQW8/JzYhZiNTNnMjLyU2NTkxXTU6TEhoZWBtNl40MmcpK245VSVJPVM/a1lYYFEyaDFJQXFhT0pBS0F0bl41NyVoPCNAXzFLZkRQQFwza1E4XCRtQ00vLjpUcUJSZVs8akJcI1U6VTBgVT0+bUtXViJIWTwtQ2JDMURmSUk5I1prJGBZRStlIUwtU1pYY19FaSM9dTk1aFs9OVlyc1toLGk8cDlNQmklI08ja0pcPTFeIVFZcUlbNmcpK2NmO0RuJ0ooNSkkOW9KSjddcTheVC9vUTY+UlhWYlxGcTJGLDdIJVxqUHUmP01TMmxnVC4qRFM9NzBrNkltcnQkOnFFYDEmVlBKaF1jQzRhTDQkcDlyXV9BbktxcFtsUjVQLzZwNSY8TDJpYTg4LUY9SX4+ZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgOQowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwNjEgMDAwMDAgbiAKMDAwMDAwMDEwMiAwMDAwMCBuIAowMDAwMDAwMjA5IDAwMDAwIG4gCjAwMDAwMDAzMjEgMDAwMDAgbiAKMDAwMDAwMDUyNCAwMDAwMCBuIAowMDAwMDAwNTkyIDAwMDAwIG4gCjAwMDAwMDA4NTMgMDAwMDAgbiAKMDAwMDAwMDkxMiAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9JRCAKWzxkN2Y5MTcyZDZiNGQ2Y2JiODQ0NWM4MzA3YjdmOWY2OT48ZDdmOTE3MmQ2YjRkNmNiYjg0NDVjODMwN2I3ZjlmNjk+XQolIFJlcG9ydExhYiBnZW5lcmF0ZWQgUERGIGRvY3VtZW50IC0tIGRpZ2VzdCAob3BlbnNvdXJjZSkKCi9JbmZvIDYgMCBSCi9Sb290IDUgMCBSCi9TaXplIDkKPj4Kc3RhcnR4cmVmCjMzOTgKJSVFT0YK" download="AirSwipe-Global-Brochure.pdf" style="width:100%;margin-top:6px">Download brochure
+          <svg class="arw" width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M1 6h13M9 1l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- thank you screen -->
+<div class="thanks" id="thanks">
+  <div>
+    <div class="ok-badge big"><svg width="42" height="42" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <span class="eyebrow">Brochure downloading</span>
+    <h2>Thank you</h2>
+    <p>We appreciate your interest in AirSwipe Global. Your brochure is on its way, and the team will be in touch soon.</p>
+    <button class="btn btn-primary" id="thanksHome">Back to home
+      <svg class="arw" width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M1 6h13M9 1l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
 
 <div class="overlay" id="overlay">
   <div class="modal-wrap">
@@ -1046,7 +1127,8 @@ button{font-family:inherit;cursor:pointer}
 document.getElementById('yr').textContent=new Date().getFullYear();
 const nav=document.getElementById('nav');
 const toTop=document.getElementById('toTop');
-addEventListener('scroll',()=>{const y=scrollY;nav.classList.toggle('scrolled',y>20);toTop.classList.toggle('show',y>600)},{passive:true});
+const fabCb=document.getElementById('fabCb');
+addEventListener('scroll',()=>{const y=scrollY;nav.classList.toggle('scrolled',y>20);const s=y>300;toTop.classList.toggle('show',y>600);fabCb.classList.toggle('show',s)},{passive:true});
 toTop.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
 
 const burger=document.getElementById('burger'),mmenu=document.getElementById('mmenu');
@@ -1066,6 +1148,25 @@ wire('modalForm','modalNote','Thank you. Your interest has been noted for this p
 wire('contactForm','contactNote','Thank you. This is a preview, so nothing is submitted yet. We will be in touch.');
 const newsBtn=document.getElementById('newsBtn');
 newsBtn&&newsBtn.addEventListener('click',()=>{document.getElementById('newsNote').textContent='You are on the list for this preview.';document.getElementById('newsEmail').value=''});
+
+// ---- request a callback flow ----
+const cbOverlay=document.getElementById('cbOverlay');
+const cbFormView=document.getElementById('cbFormView');
+const cbSuccessView=document.getElementById('cbSuccessView');
+const cbForm=document.getElementById('cbForm');
+const thanks=document.getElementById('thanks');
+function openCb(){cbFormView.style.display='';cbSuccessView.style.display='none';cbOverlay.classList.add('open')}
+function closeCb(){cbOverlay.classList.remove('open')}
+fabCb.addEventListener('click',()=>{closeMobile();openCb()});
+document.getElementById('cbClose').addEventListener('click',closeCb);
+cbOverlay.addEventListener('click',e=>{if(e.target===cbOverlay)closeCb()});
+cbForm.addEventListener('submit',e=>{e.preventDefault();cbFormView.style.display='none';cbSuccessView.style.display='';});
+document.getElementById('brochureBtn').addEventListener('click',()=>{
+  // let the download proceed, then show the thank you screen
+  setTimeout(()=>{closeCb();thanks.classList.add('open')},350);
+});
+document.getElementById('thanksHome').addEventListener('click',()=>{thanks.classList.remove('open');location.hash='#/home';scrollTo({top:0})});
+addEventListener('keydown',e=>{if(e.key==='Escape'){closeCb();thanks.classList.remove('open')}});
 
 // ---- router ----
 const routes=['home','events','insights','partners','contact'];
